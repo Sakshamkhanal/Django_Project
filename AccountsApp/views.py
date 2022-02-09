@@ -2,8 +2,9 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from django.forms import inlineformset_factory
 from .models import *
-from .forms import OrderForm
+from .forms import OrderForm,UserCreationForm
 from .filter import Orderfilter
+from django.contrib.auth.forms import UserCreationForm
 # Create your views here.
 def home(request):
     orders = Order.objects.all()
@@ -17,6 +18,20 @@ def home(request):
     context = {'orders':orders,'customers':customers,'total_orders':total_orders,'delivered':delivered,'pending':pending}
     return render(request,'AccountsApp/dashboard.html',context)
 
+def registerPage(request):
+    form = CreateUserForm()
+
+    if request.method == 'POST': #4:26 time
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+    context = {'form':form}
+    return render(request,'AccountsApp/registerPage.html',context)
+
+def LoginPage(request):
+    context = {}
+    return render(request,'AccountsApp/loginPage.html',context)
+
 def products(request):
     products = Product.objects.all()
     return render(request,'AccountsApp/products.html',{'products':products})
@@ -26,7 +41,9 @@ def customer(request,pk):
     orders = customer.order_set.all() #Many to one relationship
     order_count = orders.count()
 
-    context = {'customer':customer,'orders':orders,'order_count':order_count}
+    myFilter = Orderfilter(request.GET,queryset=orders )
+    orders =myFilter.qs
+    context = {'customer':customer,'orders':orders,'order_count':order_count,'myFilter':myFilter}
     return render(request,'AccountsApp/customer.html',context)
 
 def createOrder(request,pk):
